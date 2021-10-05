@@ -33,8 +33,10 @@ gdt_end :           ; The reason for putting a label at the end of the
                     ; GDT descriptior
 
 gdt_descriptor:
-    dw gdt_end - gdt_start - 1  ; Size of our GDT , always less one
-                                ; of the true size
+    gdt_size:
+        dw gdt_end - gdt_start - 1  ; Size of our GDT , always less one
+                                    ; of the true size
+        dq gdt_null
 
 dd gdt_start                    ; Start address of our GDT
 
@@ -45,3 +47,12 @@ dd gdt_start                    ; Start address of our GDT
 ; case is the DATA segment (0 x0 -> NULL ; 0x08 -> CODE ; 0 x10 -> DATA )
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
+
+[bits 32]
+
+EditGDT:
+    mov [gdt_code + 6], byte 11001111b
+    mov [gdt_data + 6], byte 10101111b
+    ret
+
+[bits 16]

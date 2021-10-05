@@ -24,6 +24,9 @@ EnableA20:
 
 [bits 32]
 
+%include "CPUID.asm"
+%include "SimplePaging.asm"
+
 StartProtectedMode:
 
     mov ax, DATA_SEG
@@ -33,11 +36,54 @@ StartProtectedMode:
     mov fs, ax
     mov gs, ax
 
-    mov ebx, Message
-    call PrintString
+    ;mov ebx, Message
+    ;call PrintString
 
-    %include "Print_32bit.asm"
+    ;%include "Print_32bit.asm"
 
+    ; ----------------- DELETE - Just for testing :)
+    mov al, 0x20
+    mov ecx, 0x0
+
+    VIDEO_MEMORY equ 0xb8000
+    WHITE_ON_BLACK equ 0x1f
+
+    ; Prints a null-terminated string pointed to by EDX
+    PrintString:
+        pusha
+        mov edx, VIDEO_MEMORY       ; Set edx to the start of vid mem
+
+        SomeLoop:
+            mov ah, WHITE_ON_BLACK  ; Store the attributes in AH
+
+            mov [edx], ax   ; Store char and attributes at current 
+                            ; character cell.
+            
+            cmp ecx, 1999
+            je SomeDone
+
+            add ecx, 1
+            add edx, 2
+
+            jmp SomeLoop
+
+        SomeDone:
+            popa
+            ret
+    ; -----------------
+
+    call DetectCPUID
+    call DetectLongMode
+
+    ; Enable identity paging
+    call SetUpIdentityPaging
+    call EditGDT
+    jmp CODE_SEG:Start64Bit
+
+[bits 64]
+
+Start64Bit:
+    
     jmp $
 
 Message:
